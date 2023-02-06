@@ -28,34 +28,42 @@ namespace get_queue {
 		return queue_.end();
 	}
 
-	void GetInfo(const TransportCatalogue& catalogue, Queue&& queue) {
+	void GetBusInfo(const TransportCatalogue& catalogue, std::string bus_name, std::ostream& out) {
+		if (!catalogue.FindBus(bus_name)) {
+			out << "Bus "s << bus_name << ": not found"s << std::endl;
+		}
+		else {
+			BusInfo info = catalogue.GetBusInfo(bus_name);
+			out << "Bus "s << info.name_ << ": "s << info.stop_number_ << " stops on route, "s << info.unique_stop_ << " unique stops, "s << std::setprecision(6) << info.actual_length_ << " route length, "s << info.actual_length_ / info.geographical_length_ << " curvature" << std::endl;
+		}
+	}
+
+	void GetStopInfo(const TransportCatalogue& catalogue, std::string stop_name, std::ostream& out) {
+		if (!catalogue.FindStop(stop_name)) {
+			out << "Stop "s << stop_name << ": not found"s << std::endl;
+		}
+		else {
+			auto info = catalogue.GetStopInfo(stop_name);
+			if (info.buses_.empty()) {
+				out << "Stop "s << info.name_ << ": no buses"s << std::endl;
+			}
+			else {
+				std::cout << "Stop "s << info.name_ << ": buses"s;
+				for (const auto& bus : info.buses_) {
+					out << ' ' << bus;
+				}
+				out << std::endl;
+			}
+		}
+	}
+
+	void GetInfo(const TransportCatalogue& catalogue, Queue&& queue, std::ostream& out) {
 		for (auto& q : queue) {
 			if (q.type == "Bus"s) {
-				if (!catalogue.FindBus(q.text)) {
-					std::cout << "Bus "s << q.text << ": not found"s << std::endl;
-				}
-				else {
-					BusInfo info = catalogue.GetBusInfo(q.text);
-					std::cout << "Bus "s << info.name_ << ": "s << info.stop_number_ << " stops on route, "s << info.unique_stop_ << " unique stops, "s << std::setprecision(6) << info.actual_length_ << " route length, "s << info.actual_length_ / info.geographical_length_ << " curvature" << std::endl;
-				}
+				GetBusInfo(catalogue, q.text, out);
 			}
 			else if (q.type == "Stop"s) {
-				if (!catalogue.FindStop(q.text)) {
-					std::cout << "Stop "s << q.text << ": not found"s << std::endl;
-				}
-				else {
-					auto info = catalogue.GetStopInfo(q.text);
-					if (info.buses_.empty()) {
-						std::cout << "Stop "s << info.name_ << ": no buses"s << std::endl;
-					}
-					else {
-						std::cout << "Stop "s << info.name_ << ": buses"s;
-						for (const auto& bus : info.buses_) {
-							std::cout << ' ' << bus;
-						}
-						std::cout << std::endl;
-					}
-				}
+				GetStopInfo(catalogue, q.text, out);
 			}
 		}
 	}

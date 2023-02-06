@@ -28,22 +28,13 @@ void TransportCatalogue::AddBus(std::string name, std::vector<std::string> stop_
 	}
 }
 
-void TransportCatalogue::AddDistance(std::string name, std::unordered_map<std::string, int> stop_names) {
-	const Stop* stop = FindStop(name);
-	for (auto& [name, distance] : stop_names) {
-		const auto& st = FindStop(name);
-		if (!st) {
-			throw std::out_of_range("The stop is not in the catalog"s);
-		}
-		//С проверкой заданной дистанции на условие больше или равно географической дистанции не проходят проверки примеры из тренажера,
-		//видимо разрешается "телепортация" автобусов
-		// 
-		//auto dis = ComputeDistance(stop->coordinates_, st->coordinates_);
-		//if (distance < ComputeDistance(stop->coordinates_, st->coordinates_)) {
-		//	throw std::invalid_argument("The specified distance is less than the geographic distance"s);
-		//}
-		stops_distance_[{stop, st}] = distance;
+void TransportCatalogue::SetDistance(std::pair<std::string_view, std::string_view> from_stop_to_stop, int distance) {
+	const Stop* from_stop = FindStop(from_stop_to_stop.first);
+	const Stop* to_stop = FindStop(from_stop_to_stop.second);
+	if (!to_stop) {
+		throw std::out_of_range("The stop is not in the catalog"s);
 	}
+	stops_distance_[{from_stop, to_stop}] = distance;
 }
 
 const Bus* TransportCatalogue::FindBus(const std::string_view name) const {
@@ -54,23 +45,13 @@ const Stop* TransportCatalogue::FindStop(const std::string_view name) const {
 	return (stopname_to_stop_.find(name) != stopname_to_stop_.end()) ? stopname_to_stop_.at(name) : nullptr;
 }
 
-int TransportCatalogue::NumberOfStops(const std::string_view name) const {
+int TransportCatalogue::GetNumberOfStops(const std::string_view name) const {
 	const auto bus = FindBus(name);
-	// Проверка есть в GetBusInfo
-	// 
-	//if (!bus) {
-	//	throw std::out_of_range("The bus is not in the catalog"s);
-	//}
 	return bus->round_ ? bus->stops_.size() : bus->stops_.size() * 2 - 1;
 }
 
-int TransportCatalogue::NumberOfUniqueStops(const std::string_view name) const {
+int TransportCatalogue::GetNumberOfUniqueStops(const std::string_view name) const {
 	const auto bus = FindBus(name);
-	// Проверка есть в GetBusInfo
-	// 
-	//if (!bus) {
-	//	throw std::out_of_range("The bus is not in the catalog"s);
-	//}
 	std::unordered_set<std::string_view> result;
 	for (const auto& stop : bus->stops_) {
 		result.insert(stop->name_);
@@ -91,11 +72,6 @@ double TransportCatalogue::GetStopsDistance(const std::pair<const Stop*, const S
 
 double TransportCatalogue::GetGeographicalDistance(const std::string_view name) const {
 	const auto bus = FindBus(name);
-	// Проверка есть в GetBusInfo
-	// 
-	//if (!bus) {
-	//	throw std::out_of_range("The bus is not in the catalog"s);
-	//}
 	double result = 0.0;
 	for (auto iter_1 = bus->stops_.begin(), iter_2 = iter_1 + 1; iter_2 < bus->stops_.end(); ++iter_1, ++iter_2) {
 		result += ComputeDistance((*iter_1)->coordinates_, (*iter_2)->coordinates_);
@@ -105,11 +81,6 @@ double TransportCatalogue::GetGeographicalDistance(const std::string_view name) 
 
 double TransportCatalogue::GetActualDistance(const std::string_view name) const {
 	const auto bus = FindBus(name);
-	// Проверка есть в GetBusInfo
-	// 
-	//if (!bus) {
-	//	throw std::out_of_range("The bus is not in the catalog"s);
-	//}
 	double result = 0.0;
 	for (auto iter_1 = bus->stops_.begin(), iter_2 = iter_1 + 1; iter_2 < bus->stops_.end(); ++iter_1, ++iter_2) {
 		result += GetStopsDistance({*iter_1, *iter_2});
@@ -129,8 +100,8 @@ BusInfo TransportCatalogue::GetBusInfo(const std::string_view name) const {
 	}
 	BusInfo result;
 	result.name_ = bus->name_;
-	result.stop_number_ = NumberOfStops(bus->name_);
-	result.unique_stop_ = NumberOfUniqueStops(bus->name_);
+	result.stop_number_ = GetNumberOfStops(bus->name_);
+	result.unique_stop_ = GetNumberOfUniqueStops(bus->name_);
 	result.geographical_length_ = GetGeographicalDistance(bus->name_);
 	result.actual_length_ = GetActualDistance(bus->name_);
 	return result;

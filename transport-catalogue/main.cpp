@@ -1,16 +1,17 @@
+
 #include "input_reader.h"
 #include "stat_reader.h"
 
 
 int main() {
 
-	TransportCatalogue catalog;
+	TransportCatalogue catalogue;
 	load_queue::Queue queue_load(std::cin);
 
-	load_queue::LoadInfo(catalog, std::move(queue_load));
+	load_queue::LoadInfo(catalogue, std::move(queue_load));
 
 	get_queue::Queue queue_get(std::cin);
 
-	get_queue::GetInfo(catalog, std::move(queue_get));
+	get_queue::GetInfo(catalogue, std::move(queue_get), std::cout);
 
 }

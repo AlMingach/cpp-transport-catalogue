@@ -57,15 +57,7 @@ public:
 
 	void AddStop(std::string name, Coordinates coordinates);
 	void AddBus(std::string name, std::vector<std::string> stop_names, bool round);
-	void AddDistance(std::string name, std::unordered_map<std::string, int> stop_names);
-
-
-	int NumberOfStops(const std::string_view name) const;
-	int NumberOfUniqueStops(const std::string_view name) const;
-
-	double GetStopsDistance(const std::pair<const Stop*, const Stop*>) const;
-	double GetGeographicalDistance(const std::string_view name) const;
-	double GetActualDistance(const std::string_view name) const;
+	void SetDistance(std::pair<std::string_view, std::string_view> from_stop_to_stop, int distance);
 
 	BusInfo GetBusInfo(const std::string_view name) const;
 	StopInfo GetStopInfo(const std::string_view name) const;
@@ -80,4 +72,10 @@ private:
 	std::unordered_map<std::string_view, std::set<std::string_view>> stopname_to_busses_;
 	std::unordered_map<std::pair<const Stop*, const Stop*>, int, StopsHasher> stops_distance_;
 
+	int GetNumberOfStops(const std::string_view name) const;
+	int GetNumberOfUniqueStops(const std::string_view name) const;
+
+	double GetStopsDistance(const std::pair<const Stop*, const Stop*>) const;
+	double GetGeographicalDistance(const std::string_view name) const;
+	double GetActualDistance(const std::string_view name) const;
 };

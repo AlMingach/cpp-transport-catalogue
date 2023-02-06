@@ -52,7 +52,6 @@ namespace load_queue {
 
 	};
 
-
 	class Queue {
 	public:
 
@@ -68,6 +67,10 @@ namespace load_queue {
 		std::vector<Stop> stops_;
 		std::vector<StopDistance> stops_distance_;
 		std::vector<Bus> buses_;
+
+		void ParseStopQuery(std::string text);
+
+		void ParseBusQuery(std::string text);
 	};
 
 	bool IsValueText(std::string_view text);

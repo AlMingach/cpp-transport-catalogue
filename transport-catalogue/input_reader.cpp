@@ -99,7 +99,6 @@ namespace load_queue {
 		}
 	}
 
-
 	bool Bus::GetRound() {
 		return round_;
 	}
@@ -115,37 +114,45 @@ namespace load_queue {
 			size_t lenght_1 = text.find_first_of(' ', begin);
 			std::string queue_type = std::move(text.substr(begin, lenght_1 - begin));
 			if (queue_type == "Stop") {
-				begin = text.find_first_not_of(' ', lenght_1);
-				lenght_1 = text.find_first_of(':', begin);
-
-				std::string name = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
-
-				begin = text.find_first_not_of(' ', lenght_1 + 1);
-				lenght_1 = text.find_first_of(',', begin);
-
-				std::string latitude = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
-
-				begin = text.find_first_not_of(' ', lenght_1 + 1);
-				lenght_1 = std::min(text.find_first_of(',', begin), text.size());
-
-				std::string longitude = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
-
-				stops_.push_back(std::move(Stop(name, latitude, longitude)));
-
-				if (lenght_1 != text.size()) {
-					begin = lenght_1;
-					lenght_1 = text.find_last_not_of(' ');
-					stops_distance_.push_back(std::move(StopDistance(name, std::move(text.substr(begin, lenght_1 - begin + 1)))));
-				}
+				ParseStopQuery(text.substr(lenght_1));
 			}
 			else {
-				begin = text.find_first_not_of(' ', lenght_1);
-				lenght_1 = text.find_first_of(':', begin);
-				std::string bus_name = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
-				std::string stops = std::move(text.substr(lenght_1, text.find_last_not_of(' ') + 1));
-				buses_.push_back(Bus(bus_name, stops));
+				ParseBusQuery(text.substr(lenght_1));
 			}
 		}
+	}
+
+	void Queue::ParseStopQuery(std::string text) {
+		size_t begin = text.find_first_not_of(' ');
+		size_t lenght_1 = text.find_first_of(':', begin);
+
+		std::string name = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
+
+		begin = text.find_first_not_of(' ', lenght_1 + 1);
+		lenght_1 = text.find_first_of(',', begin);
+
+		std::string latitude = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
+
+		begin = text.find_first_not_of(' ', lenght_1 + 1);
+		lenght_1 = std::min(text.find_first_of(',', begin), text.size());
+
+		std::string longitude = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
+
+		stops_.push_back(std::move(Stop(name, latitude, longitude)));
+
+		if (lenght_1 != text.size()) {
+			begin = lenght_1;
+			lenght_1 = text.find_last_not_of(' ');
+			stops_distance_.push_back(std::move(StopDistance(name, std::move(text.substr(begin, lenght_1 - begin + 1)))));
+		}
+	}
+
+	void Queue::ParseBusQuery(std::string text) {
+		size_t begin = text.find_first_not_of(' ');
+		size_t lenght_1 = text.find_first_of(':', begin);
+		std::string bus_name = std::move(text.substr(begin, text.find_last_not_of(' ', lenght_1 - 1) - begin + 1));
+		std::string stops = std::move(text.substr(lenght_1, text.find_last_not_of(' ') + 1));
+		buses_.push_back(Bus(bus_name, stops));
 	}
 
 	std::vector<Stop>& Queue::GetStops() {
@@ -179,11 +186,12 @@ namespace load_queue {
 			catalogue.AddStop(std::move(stop.GetName()), std::move(stop.GetCoordinates()));
 		}
 		for (auto& distance : queue.GetStopDistance()) {
-			catalogue.AddDistance(distance.GetName(), distance.GetDistanceToStop());
+			for (auto& to_stop_distance : distance.GetDistanceToStop()) {
+				catalogue.SetDistance({ distance.GetName(), to_stop_distance.first }, to_stop_distance.second);
+			}
 		}
 		for (auto& bus : queue.GetBus()) {
 			catalogue.AddBus(bus.GetName(), bus.GetStops(), bus.GetRound());
 		}
 	}
-
 }

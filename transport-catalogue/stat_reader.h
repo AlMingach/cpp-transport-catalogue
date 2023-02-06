@@ -19,8 +19,12 @@ namespace get_queue {
 		std::vector<Query>::iterator end();
 
 	private:
-		std::vector<Query> queue_;
+		std::vector<Query> queue_; //Без формирования очереди запроса на вывод вывод становится неккоректным для тренажера
 	};
 
-	void GetInfo(const TransportCatalogue& catalogue, Queue&& queue);
+	void GetBusInfo(const TransportCatalogue& catalogue, std::string bus_name, std::ostream& out);
+
+	void GetStopInfo(const TransportCatalogue& catalogue, std::string stop_name, std::ostream& out);
+
+	void GetInfo(const TransportCatalogue& catalogue, Queue&& queue, std::ostream& out);
 }
