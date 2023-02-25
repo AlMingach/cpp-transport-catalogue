@@ -1,17 +1,20 @@
+#include <cassert>
+#include <chrono>
+#include <sstream>
+#include <string_view>
 
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "json.h"
+#include "json_reader.h"
 
+using namespace json_reader;
+using namespace std::literals;
 
 int main() {
-
-	TransportCatalogue catalogue;
-	load_queue::Queue queue_load(std::cin);
-
-	load_queue::LoadInfo(catalogue, std::move(queue_load));
-
-	get_queue::Queue queue_get(std::cin);
-
-	get_queue::GetInfo(catalogue, std::move(queue_get), std::cout);
-
+    transport_catalogue::TransportCatalogue catalogue;
+    renderer::MapRenderer render;
+    Json_TC data(std::cin);
+    data.LoadCatalogueData(catalogue);
+    data.LoadRenderSetings(render);
+    TransportCatalogueHandler resul(catalogue, render);
+    data.PrintCatalogueStatRequests(resul, std::cout);
 }
