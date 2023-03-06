@@ -1,6 +1,7 @@
 #include "json_reader.h"
 
 namespace json_reader {
+
     Json_TC::Json_TC(std::istream& input)
         : data_(json::Load(input))
     {
@@ -8,11 +9,11 @@ namespace json_reader {
 
     void Json_TC::LoadCatalogueData(transport_catalogue::TransportCatalogue& catalogue) {
         // Загружаем данные в каталог, если они есть
-        if (data_.GetRoot().AsMap().count("base_requests"s) > 0) {
-            auto& base_requests = data_.GetRoot().AsMap().at("base_requests"s).AsArray();
+        if (data_.GetRoot().AsDict().count("base_requests"s) > 0) {
+            auto& base_requests = data_.GetRoot().AsDict().at("base_requests"s).AsArray();
             // Загружаем данные по остановкам, при вызове AsArray идет проверка на верный формат
             for (auto& request : base_requests) {
-                const auto& map = request.AsMap();
+                const auto& map = request.AsDict();
                 if (map.find("type"s) == map.end()) {
                     throw std::invalid_argument("Invalid request entered"s);
                 }
@@ -24,13 +25,13 @@ namespace json_reader {
                 }
             }
             for (auto& request : base_requests) {
-                const auto& map = request.AsMap();
+                const auto& map = request.AsDict();
                 if (map.at("type"s).AsString() == "Stop"s && (map.find("road_distances"s) != map.end())) {
                     LoadDistances(catalogue, map);
                 }
             }
             for (auto& request : base_requests) {
-                const auto& map = request.AsMap();
+                const auto& map = request.AsDict();
                 if (map.at("type"s).AsString() == "Bus"s) {
                     if (!CheckBusRequest(map)) {
                         throw std::invalid_argument("Invalid request entered"s);
@@ -59,7 +60,7 @@ namespace json_reader {
 
     void Json_TC::LoadDistances(transport_catalogue::TransportCatalogue& catalogue, const Dict& stops_data) {
         std::string name = stops_data.at("name"s).AsString();
-        for (const auto& stop_dist : stops_data.at("road_distances"s).AsMap()) {
+        for (const auto& stop_dist : stops_data.at("road_distances"s).AsDict()) {
             catalogue.SetDistance({ name, stop_dist.first }, stop_dist.second.AsInt());
         }
     }
@@ -80,7 +81,7 @@ namespace json_reader {
         }
         it = map_data.find("road_distances"s);
         if (!(it == it_end)) {
-            return CheckDistanceRequest(it->second.AsMap());
+            return CheckDistanceRequest(it->second.AsDict());
         }
         return true;
     }
@@ -165,8 +166,8 @@ namespace json_reader {
     }
 
     void Json_TC::LoadRenderSetings(renderer::MapRenderer& render) {
-        if (data_.GetRoot().AsMap().count("render_settings"s) > 0) {
-            auto& render_settings = data_.GetRoot().AsMap().at("render_settings"s).AsMap();
+        if (data_.GetRoot().AsDict().count("render_settings"s) > 0) {
+            auto& render_settings = data_.GetRoot().AsDict().at("render_settings"s).AsDict();
             renderer::RenderSettings result;
             auto it_end = render_settings.end();
             auto it = render_settings.find("width");
@@ -225,73 +226,72 @@ namespace json_reader {
     }
 
     namespace {
-        Dict GetStopForPrint(TransportCatalogueHandler& catalogue, const Dict& stops_data) {
-            Dict result;
+        Node GetStopForPrint(TransportCatalogueHandler& catalogue, const Dict& stops_data) {
+            Builder result;
             Array stops_result;
             const auto& stops = catalogue.GetBusesByStop(stops_data.at("name").AsString());
             if (!stops) {
-                result["request_id"s] = stops_data.at("id"s).AsInt();
-                result["error_message"s] = "not found"s;
+                result.StartDict().Key("request_id"s).Value(stops_data.at("id"s).AsInt())
+                    .Key("error_message"s).Value("not found"s).EndDict();
             }
             else {
                 for (const auto& stop : *stops) {
                     stops_result.push_back(std::string(stop));
                 }
-                result["buses"s] = stops_result;
-                result["request_id"s] = stops_data.at("id"s).AsInt();
+                result.StartDict().Key("buses"s).Value(stops_result)
+                    .Key("request_id"s).Value(stops_data.at("id"s).AsInt()).EndDict();
             }
-            return result;
+            return result.Build();
         }
 
-        Dict GetBusForPrint(TransportCatalogueHandler& catalogue, const Dict& bus_data) {
-            Dict result;
+        Node GetBusForPrint(TransportCatalogueHandler& catalogue, const Dict& bus_data) {
+            Builder result;
             const auto& bus_info = catalogue.GetBusInfo(bus_data.at("name").AsString());
             if (!bus_info.has_value()) {
-                result["request_id"s] = bus_data.at("id"s).AsInt();
-                result["error_message"s] = "not found"s;
+                result.StartDict().Key("request_id"s).Value(bus_data.at("id"s).AsInt())
+                    .Key("error_message"s).Value("not found"s).EndDict();
             }
             else {
-                result["curvature"s] = bus_info->actual_length_ / bus_info->geographical_length_;
-                result["request_id"s] = bus_data.at("id"s).AsInt();
-                result["route_length"s] = bus_info->actual_length_;
-                result["stop_count"s] = bus_info->stop_number_;
-                result["unique_stop_count"s] = bus_info->unique_stop_;
+                result.StartDict().Key("curvature"s).Value(bus_info->actual_length_ / bus_info->geographical_length_)
+                    .Key("request_id"s).Value(bus_data.at("id"s).AsInt())
+                    .Key("route_length"s).Value(bus_info->actual_length_)
+                    .Key("stop_count"s).Value(bus_info->stop_number_)
+                    .Key("unique_stop_count"s).Value(bus_info->unique_stop_).EndDict();
             }
-            return result;
+            return result.Build();
         }
 
-        Dict GetMapForPrint(TransportCatalogueHandler& catalogue, const Dict& map_data) {
-            Dict result;
+        Node GetMapForPrint(TransportCatalogueHandler& catalogue, const Dict& map_data) {
             std::ostringstream out;
             catalogue.RenderMap().Render(out);
-            result["map"s] = std::move(out.str());
-            result["request_id"s] = map_data.at("id"s).AsInt();
-            return result;
+            return Builder{}.StartDict().Key("map"s).Value(std::move(out.str()))
+                .Key("request_id"s).Value(map_data.at("id"s).AsInt()).EndDict().Build();
         }
 
     } //namespace
 
     void Json_TC::PrintCatalogueStatRequests(TransportCatalogueHandler& catalogue, std::ostream& output) const {
-        if (data_.GetRoot().AsMap().count("stat_requests"s) > 0) {
-            auto& stat_requests = data_.GetRoot().AsMap().at("stat_requests"s).AsArray();
+        if (data_.GetRoot().AsDict().count("stat_requests"s) > 0) {
+            auto& stat_requests = data_.GetRoot().AsDict().at("stat_requests"s).AsArray();
             // Загружаем данные по остановкам, при вызове AsArray идет проверка на верный формат
-            Array result;
+            Builder result;
+            result.StartArray();
             for (auto& request : stat_requests) {
-                const auto& map = request.AsMap();
+                const auto& map = request.AsDict();
                 if (!CheckStatRequest(map)) {
                     throw std::invalid_argument("Invalid request entered"s);
                 }
                 if (map.at("type"s).AsString() == "Stop"s) {
-                    result.push_back(GetStopForPrint(catalogue, map));
+                    result.Value(GetStopForPrint(catalogue, map));
                 }
                 if (map.at("type"s).AsString() == "Bus"s) {
-                    result.push_back(GetBusForPrint(catalogue, map));
+                    result.Value(GetBusForPrint(catalogue, map));
                 }
                 if (map.at("type"s).AsString() == "Map"s) {
-                    result.push_back(GetMapForPrint(catalogue, map));
+                    result.Value(GetMapForPrint(catalogue, map));
                 }
             }
-            Print(Document(result), output);
+            Print(Document(result.EndArray().Build()), output);
         }
     }
 } //namespace json_reader

@@ -12,9 +12,9 @@ using namespace std::literals;
 int main() {
     transport_catalogue::TransportCatalogue catalogue;
     renderer::MapRenderer render;
-    Json_TC data(std::cin);
-    data.LoadCatalogueData(catalogue);
-    data.LoadRenderSetings(render);
-    TransportCatalogueHandler resul(catalogue, render);
-    data.PrintCatalogueStatRequests(resul, std::cout);
+    Json_TC data(std::cin); // загрузка данных в json_reader
+    data.LoadCatalogueData(catalogue); // выгрузка данных из json_reader в каталог
+    data.LoadRenderSetings(render); // выгрузка данных из json_reader в MapRender
+    TransportCatalogueHandler resul(catalogue, render); // Создание фасада
+    data.PrintCatalogueStatRequests(resul, std::cout); // работа с фасадом для Json
 }

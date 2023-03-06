@@ -2,6 +2,7 @@
 
 #include "json.h"
 #include "request_handler.h"
+#include "json_builder.h"
 
 #include <sstream>
 #include <cctype>

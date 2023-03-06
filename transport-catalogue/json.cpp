@@ -199,7 +199,6 @@ namespace json {
                     res += c;
                 }
             }
-            //c = input.peek();
             //Если после null остались символы
             c = EOF;
             input >> c;
@@ -311,7 +310,7 @@ namespace json {
         return holds_alternative<Array>(*this);
     }
 
-    bool Node::IsMap() const {
+    bool Node::IsDict() const {
         return holds_alternative<Dict>(*this);
     }
 
@@ -350,11 +349,15 @@ namespace json {
         return get<Array>(*this);
     }
 
-    const Dict& Node::AsMap() const {
-        if (!IsMap()) {
+    const Dict& Node::AsDict() const {
+        if (!IsDict()) {
             throw std::logic_error("Node doesn't map");
         }
         return get<Dict>(*this);
+    }
+    
+    const Node::Value& Node::GetValue() const {
+        return *this;
     }
 
     Document::Document(Node root)
@@ -369,8 +372,9 @@ namespace json {
         return Document{ LoadNode(input) };
     }
 
+
     bool operator==(const Node& lhs, const Node& rhs) {
-        return static_cast<Value>(lhs) == static_cast<Value>(rhs);
+        return lhs.GetValue() == rhs.GetValue();
     }
 
     bool operator!=(const Node& lhs, const Node& rhs) {
@@ -499,7 +503,7 @@ namespace json {
         void PrintNode(const Node& node, const PrintContext& ctx) {
             std::visit(
                 [&ctx](const auto& value) { PrintValue(value, { ctx }); },
-                static_cast<Value>(node));
+                node.GetValue());
         }
 
     } // namespace
@@ -508,7 +512,7 @@ namespace json {
         const auto& document = doc.GetRoot();
         std::visit([&output](const auto& val) {
             return PrintValue(val, { output });
-            }, static_cast<Value>(document));
+            }, document.GetValue());
     }
 
 }  // namespace json

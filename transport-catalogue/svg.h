@@ -307,4 +307,3 @@ namespace svg {
     };
 
 }  // namespace svg
-

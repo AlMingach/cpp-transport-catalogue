@@ -124,9 +124,9 @@ namespace transport_catalogue {
 	}
 
 	bool TransportCatalogue::IsValueName(std::string_view text) {
-		return std::any_of(text.begin(), text.end(), [](char c) {
+		return 	std::any_of(text.begin(), text.end(), [](char c) {
 			return isalnum(c);
-			});
+			});;
 	}
 
 	bool TransportCatalogue::IsLatitude(double number) {
