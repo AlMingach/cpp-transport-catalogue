@@ -225,14 +225,36 @@ namespace json_reader {
         }
     }
 
+    transport_router::RouterSettings Json_TC::GetRouterSettings() const {
+        auto& render_settings = data_.GetRoot().AsDict().at("routing_settings"s).AsDict();
+        double time = 0;
+        double velocity = 0;
+        auto it_end = render_settings.end();
+        auto it = render_settings.find("bus_wait_time");
+        if (it != it_end) {
+            time = it->second.AsInt();
+        }
+        it = render_settings.find("bus_velocity");
+        if (it != it_end) {
+            velocity = it->second.AsInt();
+        }
+        return { time, velocity };
+    }
+
     namespace {
+
+        Node GetErrorMassage(int id) {
+            Builder result;
+            return result.StartDict().Key("request_id"s).Value(id)
+                .Key("error_message"s).Value("not found"s).EndDict().Build();
+        }
+
         Node GetStopForPrint(TransportCatalogueHandler& catalogue, const Dict& stops_data) {
             Builder result;
             Array stops_result;
             const auto& stops = catalogue.GetBusesByStop(stops_data.at("name").AsString());
             if (!stops) {
-                result.StartDict().Key("request_id"s).Value(stops_data.at("id"s).AsInt())
-                    .Key("error_message"s).Value("not found"s).EndDict();
+                result.Value(GetErrorMassage(stops_data.at("id"s).AsInt()));
             }
             else {
                 for (const auto& stop : *stops) {
@@ -248,8 +270,7 @@ namespace json_reader {
             Builder result;
             const auto& bus_info = catalogue.GetBusInfo(bus_data.at("name").AsString());
             if (!bus_info.has_value()) {
-                result.StartDict().Key("request_id"s).Value(bus_data.at("id"s).AsInt())
-                    .Key("error_message"s).Value("not found"s).EndDict();
+                result.Value(GetErrorMassage(bus_data.at("id"s).AsInt()));
             }
             else {
                 result.StartDict().Key("curvature"s).Value(bus_info->actual_length_ / bus_info->geographical_length_)
@@ -266,6 +287,35 @@ namespace json_reader {
             catalogue.RenderMap().Render(out);
             return Builder{}.StartDict().Key("map"s).Value(std::move(out.str()))
                 .Key("request_id"s).Value(map_data.at("id"s).AsInt()).EndDict().Build();
+        }
+
+        Node GetRouerForPrint(TransportCatalogueHandler& catalogue, const Dict& router_data) {
+            Builder result;
+            std::string_view stop_from = router_data.at("from"s).AsString();
+            std::string_view stop_to = router_data.at("to"s).AsString();
+            int id = router_data.at("id"s).AsInt();
+            auto router = catalogue.GetRouter(stop_from, stop_to);
+            if (!router) {
+                result.Value(GetErrorMassage(id));
+            }
+            else {
+                const auto& graph = catalogue.GetGraph();
+                result.StartDict().Key("items"s).StartArray();
+                for (const auto& edge : router->edges) {
+                    const auto& edge_info = graph.GetEdge(edge);
+                    auto wait_time = catalogue.GetRouterSettings().bus_wait_time_;
+                    result.StartDict().Key("stop_name"s).Value(std::string(catalogue.GetStopNameFromID(edge_info.from)))
+                        .Key("time"s).Value(wait_time)
+                        .Key("type"s).Value("Wait"s).EndDict()
+                        .StartDict().Key("bus"s).Value(std::string(edge_info.weight.bus_name))
+                        .Key("span_count"s).Value(edge_info.weight.span_count)
+                        .Key("time"s).Value(edge_info.weight.total_time - wait_time)
+                        .Key("type"s).Value("Bus"s).EndDict();
+                }
+                result.EndArray().Key("request_id"s).Value(id)
+                    .Key("total_time"s).Value(router->weight.total_time).EndDict();
+            }
+            return result.Build();
         }
 
     } //namespace
@@ -289,6 +339,9 @@ namespace json_reader {
                 }
                 if (map.at("type"s).AsString() == "Map"s) {
                     result.Value(GetMapForPrint(catalogue, map));
+                }
+                if (map.at("type"s).AsString() == "Route"s) {
+                    result.Value(GetRouerForPrint(catalogue, map));
                 }
             }
             Print(Document(result.EndArray().Build()), output);

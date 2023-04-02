@@ -15,9 +15,13 @@ namespace json {
 
 	Builder& Builder::Value(Node value, bool start) {
 
+		//Node new_node = std::visit([](auto val) {
+		//	return Node(val);
+		//	}, value);
+
 		if (is_empty_) {
 			is_empty_ = false;
-			node_ = std::move(value); 
+			node_ = std::move(value); //new_node
 			if (start) {
 				nodes_stack_.push_back(&node_);
 			}
@@ -26,7 +30,7 @@ namespace json {
 
 		if (!nodes_stack_.empty()) {
 			if (nodes_stack_.back()->IsNull()) {
-				*nodes_stack_.back() = std::move(value); 
+				*nodes_stack_.back() = std::move(value); //new_node
 				if (!start) {
 					nodes_stack_.pop_back();
 				}
@@ -35,7 +39,7 @@ namespace json {
 
 			if (nodes_stack_.back()->IsArray()) {
 				auto& p = const_cast<Array&>(nodes_stack_.back()->AsArray());
-				p.push_back(value); 
+				p.push_back(value); //new_node
 				if (start) {
 					nodes_stack_.push_back(&p.back());
 				}

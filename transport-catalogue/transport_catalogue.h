@@ -41,6 +41,8 @@ namespace transport_catalogue {
 		const std::unordered_map<std::string_view, const Bus*>& GetBuses() const;
 		const std::unordered_map<std::string_view, const Stop*>& GetStops() const;
 
+		double GetStopsDistance(const std::pair<const Stop*, const Stop*>) const;
+
 	private:
 
 		std::deque<Stop> stops_;
@@ -58,7 +60,6 @@ namespace transport_catalogue {
 		int GetNumberOfStops(const std::string_view name) const;
 		int GetNumberOfUniqueStops(const std::string_view name) const;
 
-		double GetStopsDistance(const std::pair<const Stop*, const Stop*>) const;
 		double GetGeographicalDistance(const std::string_view name) const;
 		double GetActualDistance(const std::string_view name) const;
 

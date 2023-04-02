@@ -20,6 +20,22 @@ const std::unordered_map<std::string_view, const Stop*>& TransportCatalogueHandl
     return catalogue_.GetStops();
 }
 
+std::optional <graph::Router<transport_router::RouteWeight>::RouteInfo> TransportCatalogueHandler::GetRouter(const std::string_view stop_name_from, const std::string_view stop_name_to) const {
+    return router_.GetRouter(stop_name_from, stop_name_to);
+}
+
+const graph::DirectedWeightedGraph<transport_router::RouteWeight>& TransportCatalogueHandler::GetGraph() const {
+    return router_.GetGraph();
+}
+
+const transport_router::RouterSettings& TransportCatalogueHandler::GetRouterSettings() const {
+    return router_.GetRouterSettings();
+}
+
+const std::string_view TransportCatalogueHandler::GetStopNameFromID(size_t id) const {
+    return router_.GetStopNameFromID(id);
+}
+
 // Возвращает карту маршрутов
 svg::Document TransportCatalogueHandler::RenderMap() const {
     if (!renderer_.GetValue()) {
@@ -41,4 +57,3 @@ svg::Document TransportCatalogueHandler::RenderMap() const {
 
     return renderer_.RenderMap(buses, stops);
 }
-

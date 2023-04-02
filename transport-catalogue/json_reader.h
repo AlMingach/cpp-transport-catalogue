@@ -19,6 +19,8 @@ namespace json_reader {
 
 		void LoadRenderSetings(renderer::MapRenderer& render);
 
+		transport_router::RouterSettings GetRouterSettings() const;
+
 		void PrintCatalogueStatRequests(TransportCatalogueHandler& catalogue, std::ostream& output) const;
 
 
@@ -41,4 +43,3 @@ namespace json_reader {
 
 	};
 } //namespace json_reader
-

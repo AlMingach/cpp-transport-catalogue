@@ -355,7 +355,7 @@ namespace json {
         }
         return get<Dict>(*this);
     }
-    
+
     const Node::Value& Node::GetValue() const {
         return *this;
     }
