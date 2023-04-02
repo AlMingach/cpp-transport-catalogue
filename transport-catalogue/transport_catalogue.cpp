@@ -145,4 +145,3 @@ namespace transport_catalogue {
 		return stopname_to_stop_;
 	}
 }
-

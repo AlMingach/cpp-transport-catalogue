@@ -14,11 +14,7 @@ namespace json {
 	}
 
 	Builder& Builder::Value(Node value, bool start) {
-
-		//Node new_node = std::visit([](auto val) {
-		//	return Node(val);
-		//	}, value);
-
+        
 		if (is_empty_) {
 			is_empty_ = false;
 			node_ = std::move(value); //new_node
