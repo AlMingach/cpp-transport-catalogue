@@ -1,4 +1,5 @@
 #pragma once
+
 #include "transport_catalogue.h"
 #include "router.h"
 
@@ -16,46 +17,55 @@ namespace transport_router {
 	};
 
 	struct RouterSettings {
-		double bus_wait_time_;
-		double bus_velocity_;
+		double bus_wait_time_ = 0;
+		double bus_velocity_ = 0;
 	};
 
 	class TransportRouter {
 	public:
 
-		explicit TransportRouter(const transport_catalogue::TransportCatalogue& catalogue_, RouterSettings settings);
+		TransportRouter() = default;
 
-		std::optional <graph::Router<RouteWeight>::RouteInfo> GetRouter(const std::string_view stop_name_from, const std::string_view stop_name_to) const;
+		TransportRouter(const transport_catalogue::TransportCatalogue& catalogue_, RouterSettings settings);
 
+		std::optional <graph::Router<RouteWeight>::RouteInfo> BuildRouter(const std::string_view stop_name_from, const std::string_view stop_name_to) const;
+
+		graph::DirectedWeightedGraph<RouteWeight>& GetGraph();
 		const graph::DirectedWeightedGraph<RouteWeight>& GetGraph() const;
+
+		std::unique_ptr<graph::Router<RouteWeight>>& GetRouter();
+    	const std::unique_ptr<graph::Router<RouteWeight>>& GetRouter() const;
 
 		const RouterSettings& GetRouterSettings() const;
 
 		const std::string_view GetStopNameFromID(size_t id) const;
 
-	private:
-		RouterSettings settings_;
-
-		std::unordered_map<std::string_view, size_t> stopname_id_;
-
-		std::unordered_map<size_t, std::string_view> id_stopname_;
-
-		std::unique_ptr<graph::Router<RouteWeight>> router_;
-
-		graph::DirectedWeightedGraph<RouteWeight> graph_;
-
 		void AddRouterSetting(RouterSettings settings);
 
 		void InicializeGraph(const transport_catalogue::TransportCatalogue& catalogue_);
 
-		bool CheckArgument(double arg);
+		void AddStopNamesAndID(std::unordered_map<int, std::string_view>);
 
-		size_t CountStops(const transport_catalogue::TransportCatalogue& catalogue_);
+	private:
+
+		RouterSettings settings_;
+
+		std::unordered_map<std::string_view, uint32_t> stopname_id_;
+
+		std::unordered_map<uint32_t, std::string_view> id_stopname_;
+
+		std::unique_ptr<graph::Router<RouteWeight>> router_ = nullptr;
+
+		graph::DirectedWeightedGraph<RouteWeight> graph_;
+
+		bool CheckArgument(double arg);
 
 		double ComputeRouteTime(const transport_catalogue::TransportCatalogue& catalogue_, const Stop* stop_from_index, const Stop* stop_to_index);
 
 		void BuildGraph(graph::DirectedWeightedGraph<RouteWeight>& graph, const transport_catalogue::TransportCatalogue& catalogue_,
 			const std::vector<const Stop*>& stops, const std::string_view bus_name);
+
+		size_t CountStops(const transport_catalogue::TransportCatalogue& catalogue_);
 	};
 
 	bool operator<(const RouteWeight& left, const RouteWeight& right);

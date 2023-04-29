@@ -15,7 +15,7 @@ namespace transport_router {
 		if (!CheckArgument(settings.bus_wait_time_) && !CheckArgument(settings.bus_velocity_)) {
 			throw std::invalid_argument("Incorrect wait time or velocity"s);
 		}
-		settings_ = { settings.bus_wait_time_, settings.bus_velocity_ * K_MH_TO_M_MIN };
+		settings_ = { settings.bus_wait_time_, settings.bus_velocity_ };
 	}
 
 	bool TransportRouter::CheckArgument(double arg) {
@@ -27,12 +27,12 @@ namespace transport_router {
 		for (int i = 0; i < stops.size() - 1; ++i) {
 			// общее время движения по ребру с учетом ожидания автобуса в минутах
 			double route_time = settings_.bus_wait_time_;
-			const auto& stop_1 = stops[i];
+			const auto& stop_from = stops[i];
 			int span_count = 1;
 			for (int j = i + 1; j < stops.size(); ++j) {
-				const auto& stop_2 = stops[j];
-				route_time += ComputeRouteTime(catalogue_, stops[j - 1], stop_2);
-				graph.AddEdge({ stopname_id_[stop_1->name_], stopname_id_[stop_2->name_], {bus_name, route_time, span_count++ } });
+				const auto& stop_to = stops[j];
+				route_time += ComputeRouteTime(catalogue_, stops[j - 1], stop_to);
+				graph.AddEdge({ stopname_id_[stop_from->name_], stopname_id_[stop_to->name_], {bus_name, route_time, span_count++ } });
 			}
 		}
 	}
@@ -68,7 +68,7 @@ namespace transport_router {
 	double TransportRouter::ComputeRouteTime(const transport_catalogue::TransportCatalogue& catalogue_, const Stop* stop_from_index, const Stop* stop_to_index) {
 		auto split_distance =
 			catalogue_.GetStopsDistance({ stop_from_index, stop_to_index });
-		return split_distance / settings_.bus_velocity_;
+		return split_distance / settings_.bus_velocity_ * K_MH_TO_M_MIN ;
 	}
 
 	bool operator<(const RouteWeight& left, const RouteWeight& right) {
@@ -85,12 +85,27 @@ namespace transport_router {
 		return result;
 	}
 
-	std::optional <graph::Router<RouteWeight>::RouteInfo> TransportRouter::GetRouter(const std::string_view stop_name_from, const std::string_view stop_name_to) const {
+	std::optional <graph::Router<RouteWeight>::RouteInfo> TransportRouter::BuildRouter(const std::string_view stop_name_from, const std::string_view stop_name_to) const {
+		if(!router_) {
+			return std::nullopt;
+		}
 		return router_->BuildRoute(stopname_id_.at(stop_name_from), stopname_id_.at(stop_name_to));
+	}
+
+	graph::DirectedWeightedGraph<RouteWeight>& TransportRouter::GetGraph() {
+		return graph_;
 	}
 
 	const graph::DirectedWeightedGraph<RouteWeight>& TransportRouter::GetGraph() const {
 		return graph_;
+	}
+
+	std::unique_ptr<graph::Router<RouteWeight>>& TransportRouter::GetRouter() {
+		return router_;
+	}
+
+    const std::unique_ptr<graph::Router<RouteWeight>>& TransportRouter::GetRouter() const {
+		return router_;
 	}
 
 	const RouterSettings& TransportRouter::GetRouterSettings() const {
@@ -99,5 +114,16 @@ namespace transport_router {
 
 	const std::string_view TransportRouter::GetStopNameFromID(size_t id) const {
 		return id_stopname_.at(id);
+	}
+
+	void TransportRouter::AddStopNamesAndID(std::unordered_map<int, std::string_view> container) {
+		stopname_id_.clear();
+		id_stopname_.clear();
+		stopname_id_.reserve(container.size());
+		id_stopname_.reserve(container.size());
+		for (const auto [id, name] : container) {
+			stopname_id_.insert({name, id});
+			id_stopname_.insert({id, name});
+		}
 	}
 }

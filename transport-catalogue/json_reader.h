@@ -3,6 +3,7 @@
 #include "json.h"
 #include "request_handler.h"
 #include "json_builder.h"
+#include "serialization.h"
 
 #include <sstream>
 #include <cctype>
@@ -21,7 +22,9 @@ namespace json_reader {
 
 		transport_router::RouterSettings GetRouterSettings() const;
 
-		void PrintCatalogueStatRequests(TransportCatalogueHandler& catalogue, std::ostream& output) const;
+		void PrintCatalogueStatRequests(const TransportCatalogueHandler& catalogue, std::ostream& output);
+
+		serialize::SerializeSettings GetSerializeSettings() const;
 
 
 	private:

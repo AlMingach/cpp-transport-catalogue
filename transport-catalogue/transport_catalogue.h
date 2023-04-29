@@ -37,6 +37,7 @@ namespace transport_catalogue {
 
 		std::optional<BusInfo> GetBusInfo(const std::string_view name) const;
 		const std::set<std::string_view>* GetBusesByStop(const std::string_view name) const;
+		const std::unordered_map<std::pair<const Stop*, const Stop*>, int, StopsHasher> GetSetDistances() const;
 
 		const std::unordered_map<std::string_view, const Bus*>& GetBuses() const;
 		const std::unordered_map<std::string_view, const Stop*>& GetStops() const;
@@ -53,7 +54,7 @@ namespace transport_catalogue {
 		std::unordered_map<std::string_view, std::set<std::string_view>> stopname_to_busses_;
 		std::unordered_map<std::pair<const Stop*, const Stop*>, int, StopsHasher> stops_distance_;
 
-		bool IsValueName(std::string_view text);
+		//bool IsValueName(std::string_view text);
 		bool IsLatitude(double number);
 		bool IsLongitude(double number);
 

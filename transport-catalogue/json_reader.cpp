@@ -241,6 +241,25 @@ namespace json_reader {
         return { time, velocity };
     }
 
+    // std::optional<serialize::SerializeSettings> Json_TC::GetSerializeSettings() const {
+    //     auto& serialize_settings = data_.GetRoot().AsDict().at("serialization_settings"s).AsDict();
+    //     auto it_end = serialize_settings.end();
+    //     auto it = serialize_settings.find("file");
+    //     if (it == it_end) {
+    //         return std::nullopt;
+    //     }
+    //     serialize::SerializeSettings result{it->second.AsString()};
+    //     return result;
+    // }
+
+    serialize::SerializeSettings Json_TC::GetSerializeSettings() const {
+        auto& serialize_settings = data_.GetRoot().AsDict().at("serialization_settings"s).AsDict();
+        auto it_end = serialize_settings.end();
+        auto it = serialize_settings.find("file");
+        //serialize::SerializeSettings result{it->second.AsString()};
+        return {it->second.AsString()};
+    }
+
     namespace {
 
         Node GetErrorMassage(int id) {
@@ -249,7 +268,7 @@ namespace json_reader {
                 .Key("error_message"s).Value("not found"s).EndDict().Build();
         }
 
-        Node GetStopForPrint(TransportCatalogueHandler& catalogue, const Dict& stops_data) {
+        Node GetStopForPrint(const TransportCatalogueHandler& catalogue, const Dict& stops_data) {
             Builder result;
             Array stops_result;
             const auto& stops = catalogue.GetBusesByStop(stops_data.at("name").AsString());
@@ -266,7 +285,7 @@ namespace json_reader {
             return result.Build();
         }
 
-        Node GetBusForPrint(TransportCatalogueHandler& catalogue, const Dict& bus_data) {
+        Node GetBusForPrint(const TransportCatalogueHandler& catalogue, const Dict& bus_data) {
             Builder result;
             const auto& bus_info = catalogue.GetBusInfo(bus_data.at("name").AsString());
             if (!bus_info.has_value()) {
@@ -282,19 +301,19 @@ namespace json_reader {
             return result.Build();
         }
 
-        Node GetMapForPrint(TransportCatalogueHandler& catalogue, const Dict& map_data) {
+        Node GetMapForPrint(const TransportCatalogueHandler& catalogue, const Dict& map_data) {
             std::ostringstream out;
             catalogue.RenderMap().Render(out);
             return Builder{}.StartDict().Key("map"s).Value(std::move(out.str()))
                 .Key("request_id"s).Value(map_data.at("id"s).AsInt()).EndDict().Build();
         }
 
-        Node GetRouerForPrint(TransportCatalogueHandler& catalogue, const Dict& router_data) {
+        Node GetRouerForPrint(const TransportCatalogueHandler& catalogue, const Dict& router_data) {
             Builder result;
             std::string_view stop_from = router_data.at("from"s).AsString();
             std::string_view stop_to = router_data.at("to"s).AsString();
             int id = router_data.at("id"s).AsInt();
-            auto router = catalogue.GetRouter(stop_from, stop_to);
+            auto router = catalogue.BuildRouter(stop_from, stop_to);
             if (!router) {
                 result.Value(GetErrorMassage(id));
             }
@@ -320,7 +339,7 @@ namespace json_reader {
 
     } //namespace
 
-    void Json_TC::PrintCatalogueStatRequests(TransportCatalogueHandler& catalogue, std::ostream& output) const {
+    void Json_TC::PrintCatalogueStatRequests(const TransportCatalogueHandler& catalogue, std::ostream& output) {
         if (data_.GetRoot().AsDict().count("stat_requests"s) > 0) {
             auto& stat_requests = data_.GetRoot().AsDict().at("stat_requests"s).AsArray();
             // Загружаем данные по остановкам, при вызове AsArray идет проверка на верный формат
