@@ -10,10 +10,6 @@ namespace renderer {
         settings_ = settings;
     }
 
-    // std::optional<RenderSettings> MapRenderer::GetValue() const {
-    //     return settings_;
-    // }
-
     const RenderSettings& MapRenderer::GetValue() const {
          return settings_;
      }

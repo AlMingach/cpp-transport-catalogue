@@ -72,11 +72,6 @@ namespace svg {
         int indent = 0;
     };
 
-    /*
-     * Абстрактный базовый класс Object служит для унифицированного хранения
-     * конкретных тегов SVG-документа
-     * Реализует паттерн "Шаблонный метод" для вывода содержимого тега
-     */
     class Object {
     public:
         void Render(const RenderContext& context) const;
@@ -194,8 +189,6 @@ namespace svg {
 
     private:
         Owner& AsOwner() {
-            // static_cast безопасно преобразует *this к Owner&,
-            // если класс Owner — наследник PathProps
             return static_cast<Owner&>(*this);
         }
 
@@ -206,10 +199,6 @@ namespace svg {
         std::optional<StrokeLineJoin> line_join_;
     };
 
-    /*
-     * Класс Circle моделирует элемент <circle> для отображения круга
-     * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/circle
-     */
     class Circle final : public Object, public PathProps<Circle> {
     public:
 
@@ -223,10 +212,6 @@ namespace svg {
         double radius_ = 1.0;
     };
 
-    /*
-     * Класс Polyline моделирует элемент <polyline> для отображения ломаных линий
-     * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/polyline
-     */
     class Polyline : public Object, public PathProps<Polyline> {
     public:
         // Добавляет очередную вершину к ломаной линии
@@ -238,10 +223,6 @@ namespace svg {
         void RenderObject(const RenderContext& context) const override;
     };
 
-    /*
-     * Класс Text моделирует элемент <text> для отображения текста
-     * https://developer.mozilla.org/en-US/docs/Web/SVG/Element/text
-     */
     class Text : public Object, public PathProps<Text> {
     public:
         // Задаёт координаты опорной точки (атрибуты x и y)

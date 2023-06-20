@@ -38,9 +38,6 @@ const std::string_view TransportCatalogueHandler::GetStopNameFromID(size_t id) c
 
 // Возвращает карту маршрутов
 svg::Document TransportCatalogueHandler::RenderMap() const {
-    //if (!renderer_.GetValue()) {
-    //    return {};
-    //}
     // Создание отсортированного контейнера остановок, которые учавствуют в маршрутах
     std::map<std::string_view, const Stop*> stops;
     for (const auto& stop : GetStops()) {

@@ -13,9 +13,9 @@ namespace transport_catalogue {
 		if (!IsLongitude(coordinates.lng)) {
 			throw std::invalid_argument("longitude > 180.0 or < -180.0"s);
 		}
-		//if (!IsValueName(name)) {
-		//	throw std::invalid_argument("Stop name contains prohibited characters"s);
-		//}
+		if (!IsValueName(name)) {
+			throw std::invalid_argument("Stop name contains prohibited characters"s);
+		}
 		Stop st = { std::move(name), coordinates };
 		Stop& stop = stops_.emplace_back(std::move(st));
 		stopname_to_stop_[stop.name_] = &stop;
@@ -23,9 +23,9 @@ namespace transport_catalogue {
 	}
 
 	void TransportCatalogue::AddBus(std::string name, std::vector<std::string_view> stop_names, bool round) {
-		//if (!IsValueName(name)) {
-		//	throw std::invalid_argument("Bus name contains prohibited characters"s);
-		//}
+		if (!IsValueName(name)) {
+			throw std::invalid_argument("Bus name contains prohibited characters"s);
+		}
 		std::vector<const Stop*> stops;
 		for (auto& stop : stop_names) {
 			const auto& st = FindStop(stop);
@@ -123,11 +123,11 @@ namespace transport_catalogue {
 		return &it->second;
 	}
 
-	//bool TransportCatalogue::IsValueName(std::string_view text) {
-	//	return 	std::any_of(text.begin(), text.end(), [](char c) {
-	//		return isalnum(c);
-	//		});;
-	//}
+	bool TransportCatalogue::IsValueName(std::string_view text) {
+		return 	std::any_of(text.begin(), text.end(), [](char c) {
+			return isalnum(c);
+			});;
+	}
 
 	bool TransportCatalogue::IsLatitude(double number) {
 		return -90.0 <= number && number <= 90.0;

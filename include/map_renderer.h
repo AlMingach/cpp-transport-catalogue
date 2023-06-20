@@ -114,14 +114,11 @@ namespace renderer {
 
         void SetRenderSettings(RenderSettings settings);
 
-        //std::optional<RenderSettings> GetValue() const;
-
         const RenderSettings& GetValue() const;
 
         svg::Document RenderMap(const Buses& buses_data, const Stops& stops_data)const;
 
     private:
-        //std::optional<RenderSettings> settings_;
         RenderSettings settings_;
 
         void RenderBusLine(const Buses& buses_data, svg::Document& result, const SphereProjector& proj) const;

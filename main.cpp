@@ -38,8 +38,8 @@ int main(int argc, char* argv[]) {
         
     } else if (mode == "process_requests"sv) {
         json_reader::Json_TC data(std::cin);
-       proto_catalogue.SetSerializeSettings(data.GetSerializeSettings());
-       proto_catalogue.Deserialize(catalogue, render, router);
+        proto_catalogue.SetSerializeSettings(data.GetSerializeSettings());
+        proto_catalogue.Deserialize(catalogue, render, router);
 
         data.PrintCatalogueStatRequests(handler, std::cout);
 

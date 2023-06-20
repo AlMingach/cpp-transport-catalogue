@@ -241,22 +241,10 @@ namespace json_reader {
         return { time, velocity };
     }
 
-    // std::optional<serialize::SerializeSettings> Json_TC::GetSerializeSettings() const {
-    //     auto& serialize_settings = data_.GetRoot().AsDict().at("serialization_settings"s).AsDict();
-    //     auto it_end = serialize_settings.end();
-    //     auto it = serialize_settings.find("file");
-    //     if (it == it_end) {
-    //         return std::nullopt;
-    //     }
-    //     serialize::SerializeSettings result{it->second.AsString()};
-    //     return result;
-    // }
-
     serialize::SerializeSettings Json_TC::GetSerializeSettings() const {
         auto& serialize_settings = data_.GetRoot().AsDict().at("serialization_settings"s).AsDict();
         auto it_end = serialize_settings.end();
         auto it = serialize_settings.find("file");
-        //serialize::SerializeSettings result{it->second.AsString()};
         return {it->second.AsString()};
     }
 
